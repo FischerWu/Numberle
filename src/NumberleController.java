@@ -11,8 +11,8 @@ public class NumberleController {
         this.view = view;  // 设置游戏视图
     }
 
-    public void processInput(String input) {
-        model.processInput(input); // 处理用户输入
+    public boolean processInput(String input) {
+        return model.processInput(input); // 处理用户输入
     }
 
     public boolean isGameOver() {
