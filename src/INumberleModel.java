@@ -1,3 +1,5 @@
+import java.util.Map;
+
 public interface INumberleModel {
     int MAX_ATTEMPTS = 6;
 
@@ -9,5 +11,6 @@ public interface INumberleModel {
     StringBuilder getCurrentGuess();
     int getRemainingAttempts();
     void startNewGame();
-
+    int[] getColorState();
+    Map<String,Integer> getCharacterColorMap();
 }

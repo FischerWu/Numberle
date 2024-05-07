@@ -1,3 +1,4 @@
+import javax.swing.*;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -13,10 +14,12 @@ public class NumberleModel extends Observable implements INumberleModel {
     private boolean gameWon; // 游戏是否胜利
     private List<String> answers; // 存储数学等式的列表
 
-    boolean flag1 = true; // 标志位1
-    boolean flag2 = true; // 标志位2
-    boolean flag3 = true; // 标志位3
-    String defaultNumber = "2+3*2=8"; // 默认数学等式
+    private int[] colorState;
+    private Map<String, Integer> characterColorMap;
+    private boolean showInvalidEquationError = true; // 第一个标志
+    private boolean showTargetEquation = true; // 第二个标志
+    private boolean randomizeEquation = true; // 第三个标志
+    private String defaultAnswer = "1+1+1=3";
 
     /**
      * NumberleModel 类的构造函数，初始化游戏模型。
@@ -24,6 +27,7 @@ public class NumberleModel extends Observable implements INumberleModel {
     public NumberleModel() {
         loadAnswerFromFile("equations.txt");
     }
+
 
     /**
      * 初始化游戏。
@@ -34,6 +38,9 @@ public class NumberleModel extends Observable implements INumberleModel {
         currentGuess = new StringBuilder("       "); // 初始化当前猜测为空白
         remainingAttempts = MAX_ATTEMPTS; // 初始化剩余尝试次数
         gameWon = false; // 初始化游戏胜利状态为假
+        if (randomizeEquation) {
+            targetNumber = defaultAnswer;
+        }
         setChanged(); // 设置数据已更改
         notifyObservers(); // 通知观察者
     }
@@ -46,29 +53,26 @@ public class NumberleModel extends Observable implements INumberleModel {
      */
     @Override
     public boolean processInput(String input) {
-        currentGuess = new StringBuilder(input); // 更新当前猜测为用户输入
-        try {
-            if (input.length() != 7 // 如果输入长度不为7
-                    || !input.contains("=") // 或不包含等号
-                    || !input.matches("[0-9+\\-×÷*/=]+")) { // 或包含非法字符
-                if (flag1){ // 如果标志位1为真
-                    return false; // 返回输入无效
-                }
-            }
-            if (!checkGuessValid() && flag1) { // 如果猜测无效且标志位1为真
-                return false; // 返回输入无效
-            }
-        } catch (NumberFormatException e) {
-            return false; // 返回输入无效
+        currentGuess = new StringBuilder(input);
+        boolean validInput = isValidInput(input);
+        boolean validGuess = validInput && checkGuessValid();
+
+        // 根据条件进行处理
+        if (!validInput || (showInvalidEquationError && !validGuess)) {
+            JOptionPane.showMessageDialog(null, "Invalid input!");
+            return false;
         }
 
-        remainingAttempts--; // 剩余尝试次数减一
-        if (input.equals(targetNumber)) { // 如果猜测等于目标数字
-            gameWon = true; // 设置游戏胜利状态为真
+        setColorState();
+        setColorState(input,targetNumber);
+
+        remainingAttempts--;
+        if (input.equals(targetNumber)) {
+            gameWon = true;
         }
-        setChanged(); // 设置数据已更改
-        notifyObservers(); // 通知观察者
-        return true; // 返回输入有效
+        setChanged();
+        notifyObservers();
+        return true;
     }
 
     /**
@@ -99,44 +103,59 @@ public class NumberleModel extends Observable implements INumberleModel {
      * @return 表达式的结果
      */
     private double getResult(String input) {
-        String[] parts = input.split("(?=[+\\-×÷*/])|(?<=[+\\-×÷*/])"); // 将表达式按运算符分割成部分
-        double result = 0; // 初始化结果为0
-        Stack<String> stack = new Stack<>(); // 创建字符串栈
-        for (int i = 0; i < parts.length; i++) { // 遍历表达式的部分
-            String part = parts[i]; // 获取当前部分
+        String[] parts = input.split("(?=[+\\-×÷*/])|(?<=[+\\-×÷*/])");
+        double result = 0;
+        Stack<String> stack = new Stack<>();
+        for (int i = 0; i < parts.length; i++) {
+            String part = parts[i];
             assert part != null && !part.isEmpty();
-            if (part.matches("\\d+") || part.equals("+") || part.equals("-")) { // 如果是数字或者加减号
-                stack.push(part); // 入栈
-            } else { // 如果是乘除号
-                double b = Double.parseDouble(stack.pop()); // 弹出栈顶元素作为第二操作数
-                assert (parts[i + 1] != null && parts[i + 1].matches("\\d+"));
-                double a = Double.parseDouble(parts[i + 1]); // 获取下一个数字作为第一操作数
-                i++;
-                if (part.equals("×") || part.equals("*") || part.equals("x")) { // 如果是乘法
-                    stack.push(String.valueOf(a * b)); // 计算并入栈
-                } else if (part.equals("÷") || part.equals("/")) { // 如果是除法
-                    stack.push(String.valueOf(b / a)); // 计算并入栈
-                }
+            switch (part) {
+                case "+":
+                    stack.push(part);
+                    break;
+                case "-":
+                    stack.push(part);
+                    break;
+                case "*":
+                    double b = Double.parseDouble(stack.pop());
+                    assert (parts[i + 1] != null && parts[i + 1].matches("\\d+"));
+                    double a = Double.parseDouble(parts[i + 1]);
+                    i++;
+                    stack.push(String.valueOf(a * b));
+                    break;
+                case "/":
+                    double bDiv = Double.parseDouble(stack.pop());
+                    assert (parts[i + 1] != null && parts[i + 1].matches("\\d+"));
+                    double aDiv = Double.parseDouble(parts[i + 1]);
+                    i++;
+                    stack.push(String.valueOf(bDiv / aDiv));
+                    break;
+                default:
+                    stack.push(part);
+                    break;
             }
         }
 
-        for (int i = 0; i < stack.size(); i++) { // 遍历栈中的元素
-            String s = stack.get(i); // 获取当前元素
-            if (s.equals("+") || s.equals("-")) { // 如果是加减号
-                assert i > 0 && i < stack.size() - 1;
-                double b = Double.parseDouble(stack.get(i + 1)); // 获取下一个数字作为第二操作数
-                if (s.equals("+")) { // 如果是加号
-                    result = result + b; // 执行加法
-                } else { // 如果是减号
-                    result = result - b; // 执行减法
-                }
-                i++;
-            } else { // 如果是数字
-                assert s.matches("\\d+");
-                result = Double.parseDouble(s); // 解析数字并赋值给结果
+        for (int i = 0; i < stack.size(); i++) {
+            String s = stack.get(i);
+            switch (s) {
+                case "+":
+                    double bAdd = Double.parseDouble(stack.get(i + 1));
+                    result += bAdd;
+                    i++;
+                    break;
+                case "-":
+                    double bSub = Double.parseDouble(stack.get(i + 1));
+                    result -= bSub;
+                    i++;
+                    break;
+                default:
+                    assert s.matches("\\d+");
+                    result = Double.parseDouble(s);
+                    break;
             }
         }
-        return result; // 返回结果
+        return result;
     }
 
     /**
@@ -206,15 +225,92 @@ public class NumberleModel extends Observable implements INumberleModel {
             }
         } catch (IOException e) {
             System.err.println("Error reading the answers file: " + e.getMessage());
-            return; // 在错误的情况下提前返回
+            return;
         }
         if (!answers.isEmpty()) {
-            // 如果列表不为空，随机选择一个答案作为目标数字
             Random rand = new Random();
             targetNumber = answers.get(rand.nextInt(answers.size()));
         } else {
-            // 如果没有找到答案，可以设置一个默认值或者抛出一个异常
             System.err.println("No answers found in the file.");
         }
     }
+
+
+    private void setColorState() {
+        colorState = new int[currentGuess.length()];
+        for (int i = 0; i < currentGuess.length(); i++) {
+            char c = currentGuess.charAt(i);
+            if (c == targetNumber.charAt(i)) {
+                colorState[i] = 1; // 绿色
+            } else if (targetNumber.contains(String.valueOf(c))) {
+                colorState[i] = 2; // 橙色
+            } else {
+                colorState[i] = 3; // 深灰色
+            }
+        }
+    }
+
+    private void setColorState(String currentGuess, String targetNumber) {
+        // 初始化颜色状态数组
+        colorState = new int[currentGuess.length()];
+        // 初始化字符颜色映射
+        characterColorMap = new HashMap<>();
+        // 遍历当前猜测的每个字符
+        for (int i = 0; i < currentGuess.length(); i++) {
+            char c = currentGuess.charAt(i);
+            int colorIndex = 0; // 初始化颜色索引
+            // 检查字符是否与目标数字的相应位置匹配
+            if (c == targetNumber.charAt(i)) {
+                colorIndex = 1; // 绿色
+            } else if (targetNumber.contains(String.valueOf(c))) {
+                colorIndex = 2; // 橙色
+            } else {
+                colorIndex = 3; // 深灰色
+            }
+            // 更新颜色状态数组
+            colorState[i] = colorIndex;
+            // 更新或添加字符颜色映射
+            characterColorMap.put(String.valueOf(c), colorIndex);
+        }
+    }
+
+    public int[] getColorState() {
+        return colorState;
+    }
+
+    public Map<String, Integer> getCharacterColorMap() {
+        return characterColorMap;
+    }
+
+    private boolean isValidInput(String input) {
+        return input.length() == 7 && input.contains("=") && input.matches("[0-9+\\-×÷*/=]+");
+    }
+
+    // 获取标志状态的方法
+    public boolean isShowInvalidEquationError() {
+        return showInvalidEquationError;
+    }
+
+    public void setShowInvalidEquationError(boolean showInvalidEquationError) {
+        this.showInvalidEquationError = showInvalidEquationError;
+    }
+
+    public boolean isShowTargetEquation() {
+        return showTargetEquation;
+    }
+
+    public void setShowTargetEquation(boolean showTargetEquation) {
+        this.showTargetEquation = showTargetEquation;
+    }
+
+    public boolean isRandomizeEquation() {
+        return randomizeEquation;
+    }
+
+    public void setRandomizeEquation(boolean randomizeEquation) {
+        this.randomizeEquation = randomizeEquation;
+    }
+
+
+
 }
