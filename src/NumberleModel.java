@@ -14,23 +14,17 @@ public class NumberleModel extends Observable implements INumberleModel {
     private int[] colorState;
     private Map<String, Integer> charColorMap;
     private boolean flag1 = true;
-    private boolean flag2 = false;
+    private boolean flag2 = true;
     private boolean flag3 = false;
     private final String defaultTarget = "1+1+1=3";
 
-    /**
-     * NumberleModel 类的构造函数，初始化游戏模型。
-     */
-    public NumberleModel() {
-        loadAnswerFromFile();
-    }
 
     /**
      * 初始化游戏。
      */
     @Override
     public void initialize() {
-        loadAnswerFromFile();
+        loadTargetNumber();
         currentGuess = new StringBuilder("       "); // 初始化当前猜测为空白
         remainingAttempts = MAX_ATTEMPTS; // 初始化剩余尝试次数
         gameWon = false; // 初始化游戏胜利状态为假
@@ -47,7 +41,7 @@ public class NumberleModel extends Observable implements INumberleModel {
 
 
     /**
-     * 处理用户输入。
+     * proc
      *
      * @param expression 用户输入的字符串
      * @return 输入是否有效
@@ -58,7 +52,6 @@ public class NumberleModel extends Observable implements INumberleModel {
         boolean validInput = isValidInput(expression);
         boolean validGuess = validInput && checkGuessValid();
 
-        // 根据条件进行处理
         if (!validInput || (flag1 && !validGuess)) {
             return false;
         }
@@ -81,9 +74,9 @@ public class NumberleModel extends Observable implements INumberleModel {
      * @return 猜测是否有效
      */
     private boolean checkGuessValid() {
-        String[] parts = currentGuess.toString().split("="); // 将当前猜测按等号分割成两部分
-        if (parts.length != 2) { // 如果分割后不是两部分
-            return false; // 返回无效
+        String[] parts = currentGuess.toString().split("=");
+        if (parts.length != 2) {
+            return false;
         }
         String left = parts[0];
         String right = parts[1];
@@ -146,7 +139,7 @@ public class NumberleModel extends Observable implements INumberleModel {
      */
     @Override
     public boolean isGameOver() {
-        return remainingAttempts <= 0 || gameWon; // 剩余尝试次数为0或游戏胜利时游戏结束
+        return remainingAttempts <= 0 || gameWon;
     }
 
     /**
@@ -156,7 +149,7 @@ public class NumberleModel extends Observable implements INumberleModel {
      */
     @Override
     public boolean isGameWon() {
-        return gameWon; // 返回游戏胜利状态
+        return gameWon;
     }
 
     /**
@@ -166,7 +159,7 @@ public class NumberleModel extends Observable implements INumberleModel {
      */
     @Override
     public String getTargetNumber() {
-        return targetNumber; // 返回目标数字
+        return targetNumber;
     }
 
     /**
@@ -176,7 +169,7 @@ public class NumberleModel extends Observable implements INumberleModel {
      */
     @Override
     public StringBuilder getCurrentGuess() {
-        return currentGuess; // 返回当前猜测
+        return currentGuess;
     }
 
     /**
@@ -186,7 +179,7 @@ public class NumberleModel extends Observable implements INumberleModel {
      */
     @Override
     public int getRemainingAttempts() {
-        return remainingAttempts; // 返回剩余尝试次数
+        return remainingAttempts;
     }
 
     /**
@@ -194,15 +187,16 @@ public class NumberleModel extends Observable implements INumberleModel {
      */
     @Override
     public void startNewGame() {
-        initialize(); // 调用初始化方法
+        initialize();
     }
 
-    private void loadAnswerFromFile() {
+
+    private void loadTargetNumber() {
         List<String> targetNumberList = new ArrayList<>();
         try (BufferedReader reader = new BufferedReader(new FileReader("equations.txt"))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                targetNumberList.add(line.trim()); // 将答案添加到列表中
+                targetNumberList.add(line.trim());
             }
         } catch (IOException e) {
             System.err.println("Error reading the answers file: " + e.getMessage());
@@ -243,7 +237,6 @@ public class NumberleModel extends Observable implements INumberleModel {
             } else {
                 colorState[i] = 3;
             }
-            // colorState[i] = colorIndex;
             charColorMap.put(String.valueOf(c), colorState[i]);
         }
     }
@@ -260,7 +253,6 @@ public class NumberleModel extends Observable implements INumberleModel {
         return input.length() == 7 && input.contains("=") && input.matches("[0-9+\\-×÷*/=]+");
     }
 
-    // 获取标志状态的方法
     public boolean getFlag1() {
         return flag1;
     }
@@ -289,9 +281,5 @@ public class NumberleModel extends Observable implements INumberleModel {
     public void setFlag3() {
         this.flag3 = !flag3;
     }
-
-
-
-
 
 }

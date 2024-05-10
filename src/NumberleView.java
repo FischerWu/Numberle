@@ -1,11 +1,10 @@
 // 导入必要的包
 import javax.swing.*;
 import java.awt.*;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Observer;
 
-// NumberleView 类负责显示游戏界面并与用户交互。
+
 public class NumberleView implements Observer {
     private final INumberleModel model;
     private final NumberleController controller;
@@ -49,9 +48,9 @@ public class NumberleView implements Observer {
     }
 
     private void initializeMenu() {
-        JMenuBar menuBar = new JMenuBar(); // 创建菜单栏
+        JMenuBar menuBar = new JMenuBar();
 
-        JMenu menu = new JMenu("Menu"); // 创建菜单
+        JMenu menu = new JMenu("Menu");
         JMenuItem menuItem1 = new JMenuItem("Invalid Equation");
         menuItem1.setSelected(true);
         JMenuItem menuItem2 = new JMenuItem("Show Target Equation");
@@ -59,22 +58,22 @@ public class NumberleView implements Observer {
         JMenuItem menuItem3 = new JMenuItem("Default Equation");
         menuItem3.setSelected(true);
 
-        // 设置菜单项背景颜色
-        menuItem1.setBackground(controller.getFlag1() ? Color.BLUE : Color.WHITE);
-        menuItem2.setBackground(controller.getFlag2() ? Color.BLUE : Color.WHITE);
-        menuItem3.setBackground(controller.getFlag3() ? Color.BLUE : Color.WHITE);
 
-        // 为菜单项按钮添加点击事件监听器
+        menuItem1.setBackground(controller.getFlag1() ? new Color(0, 200, 150) : Color.WHITE);
+        menuItem2.setBackground(controller.getFlag2() ? new Color(0, 200, 150) : Color.WHITE);
+        menuItem3.setBackground(controller.getFlag3() ? new Color(0, 200, 150) : Color.WHITE);
+
+
         menuItem1.addActionListener(e -> {
             controller.changeFlag1();
             boolean currentState = controller.getFlag1();
-            menuItem1.setBackground(currentState ? Color.BLUE : Color.WHITE);
+            menuItem1.setBackground(currentState ? new Color(0, 200, 150) : Color.WHITE);
         });
 
         menuItem2.addActionListener(e -> {
             controller.changeFlag2();
             boolean currentState = controller.getFlag2();
-            menuItem2.setBackground(currentState ? Color.BLUE : Color.WHITE);
+            menuItem2.setBackground(currentState ? new Color(0, 200, 150) : Color.WHITE);
             targetPanel.setVisible(currentState);
         });
 
@@ -82,7 +81,7 @@ public class NumberleView implements Observer {
             controller.changeFlag3();
             boolean currentState = controller.getFlag3();
             this.controller.startNewGame();
-            menuItem3.setBackground(currentState ? Color.BLUE : Color.WHITE);
+            menuItem3.setBackground(currentState ? new Color(0, 200, 150) : Color.WHITE);
         });
         menu.add(menuItem1);
         menu.add(menuItem2);
@@ -98,7 +97,7 @@ public class NumberleView implements Observer {
         inputPanel.setLayout(new GridLayout(6, 7, 10, 10));
         inputPanel.setPreferredSize(new Dimension(420, 360));
 
-        // 初始化6*7面板
+
         for (int j = 0; j < inputFields.length; j++) {
             for (int i = 0; i < inputFields[j].length; i++) {
                 inputFields[j][i] = new JTextField();
@@ -130,7 +129,7 @@ public class NumberleView implements Observer {
         targetPanel.setVisible(controller.getFlag2());
 
         restartButton = new JButton("Restart");
-        restartButton.setBackground(new Color(220, 225, 237));
+        restartButton.setBackground(new Color(230, 230, 230));
         restartButton.setEnabled(false);
         restartButton.addActionListener(e -> {
             controller.startNewGame();
@@ -192,7 +191,7 @@ public class NumberleView implements Observer {
             }
             inputFields[getCurrentRow()][currentIndex].setText("");
         });
-        deleteButton.setBackground(new Color(220, 225, 237));
+        deleteButton.setBackground(new Color(230, 235, 230));
         deletePanel.add(deleteButton);
         operatorPanel.add(deletePanel);
 
@@ -245,7 +244,7 @@ public class NumberleView implements Observer {
 
             restartButton.setEnabled(true);
         });
-        submitButton.setBackground(new Color(220, 225, 237));
+        submitButton.setBackground(new Color(230, 230, 230));
         submitPanel.add(submitButton);
         operatorPanel.add(submitPanel);
 
@@ -254,6 +253,8 @@ public class NumberleView implements Observer {
         thirdPanel.add(keyboardPanel);
         frame.add(thirdPanel, BorderLayout.SOUTH);
     }
+
+
 
     @Override
     public void update(java.util.Observable o, Object arg) {
@@ -294,11 +295,13 @@ public class NumberleView implements Observer {
         for (JButton button : numberButtons) {
             button.setBackground(Color.WHITE);
             button.setForeground(Color.BLACK);
+            button.setOpaque(false);
         }
 
         for (JButton button : operatorButtons) {
             button.setBackground(Color.WHITE);
             button.setForeground(Color.BLACK);
+            button.setOpaque(false);
         }
     }
 
@@ -313,18 +316,10 @@ public class NumberleView implements Observer {
         if (currentRow >= 0 && currentRow < inputFields.length) {
             for (int i = 0; i < colorState.length; i++) {
                 switch (colorState[i]) {
-                    case 1:
-                        inputFields[currentRow][i].setBackground(Color.GREEN);
-                        break;
-                    case 2:
-                        inputFields[currentRow][i].setBackground(Color.ORANGE);
-                        break;
-                    case 3:
-                        inputFields[currentRow][i].setBackground(Color.DARK_GRAY);
-                        break;
-                    default:
-                        inputFields[currentRow][i].setBackground(Color.WHITE);
-                        break;
+                    case 1 -> inputFields[currentRow][i].setBackground(new Color(0, 200, 150));
+                    case 2 -> inputFields[currentRow][i].setBackground(new Color(255, 150, 0));
+                    case 3 -> inputFields[currentRow][i].setBackground(new Color(160, 160, 180));
+                    default -> inputFields[currentRow][i].setBackground(Color.WHITE);
                 }
             }
         }
@@ -346,24 +341,26 @@ public class NumberleView implements Observer {
 
     private void setKeyBoardColor(JButton button, int colorIndex) {
         switch (colorIndex) {
-            case 1:
-                button.setForeground(Color.GREEN);
-                button.setBackground(Color.GREEN);
+            case 1 -> {
+                button.setForeground(new Color(0, 200, 150));
+                button.setBackground(new Color(0, 200, 150));
                 button.setOpaque(true);
-                break;
-            case 2:
-                button.setForeground(Color.ORANGE);
-                button.setBackground(Color.ORANGE);
+            }
+            case 2 -> {
+                button.setForeground(new Color(255, 150, 0));
+                button.setBackground(new Color(255, 150, 0));
                 button.setOpaque(true);
-                break;
-            case 3:
-                button.setForeground(Color.DARK_GRAY);
-                button.setBackground(Color.DARK_GRAY);
+            }
+            case 3 -> {
+                button.setForeground(new Color(160, 160, 180));
+                button.setBackground(new Color(160, 160, 180));
                 button.setOpaque(true);
-                break;
-            default:
+            }
+            default -> {
                 button.setForeground(Color.BLACK);
-                break;
+                button.setBackground(Color.WHITE);
+                button.setOpaque(false);
+            }
         }
     }
 }

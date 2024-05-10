@@ -1,14 +1,14 @@
 // NumberleController.java
 public class NumberleController {
-    private INumberleModel model; // 游戏模型
-    private NumberleView view; // 游戏视图
+    private INumberleModel model;
+    private NumberleView view;
 
     public NumberleController(INumberleModel model) {
-        this.model = model; // 设置游戏模型
+        this.model = model;
     }
 
     public void setView(NumberleView view) {
-        this.view = view;  // 设置游戏视图
+        this.view = view;
     }
 
     public boolean processInput(String input) {

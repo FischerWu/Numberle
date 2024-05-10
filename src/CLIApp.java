@@ -3,24 +3,35 @@ import java.util.Scanner;
 
 public class CLIApp {
     public static void main(String[] args) {
-        INumberleModel model = new NumberleModel();
         Scanner scanner = new Scanner(System.in);
+        boolean playAgain = true;
+        while (playAgain) {
+            playGame();
+            System.out.print("Do you want to play again? (yes/no): ");
+            String choice = scanner.nextLine().toLowerCase();
+            playAgain = choice.equals("yes");
+        }
 
-        System.out.println("Welcome to Numberle!");
+        System.out.println("Thank you for playing Numberle!");
+        scanner.close();
+    }
+
+    private static void playGame() {
+        INumberleModel model = new NumberleModel();
         model.initialize();
-
+        System.out.println("Welcome to Numberle!");
+        System.out.println("Remaining attempts: " + model.getRemainingAttempts());
 
         while (!model.isGameOver()) {
             if (model.getFlag3()) {
                 model.startNewGame();
             }
 
-
             System.out.print("Enter your guess: ");
-            String input = scanner.nextLine();
+            String input = new Scanner(System.in).nextLine();
 
             if (!model.processInput(input) && (model.getFlag1())) {
-                System.out.println("Invalid input!");
+                System.out.println("Invalid input! Please enter the correct equation");
                 continue;
             }
 
@@ -29,24 +40,21 @@ public class CLIApp {
             printAvailableCharacters(model.getCharacterColorMap());
         }
 
-        // 游戏结束，显示最终消息
         if (model.isGameWon()) {
             System.out.println("Congratulations! You've won the game!");
         } else {
             System.out.println("Game over! You've used all attempts.");
             System.out.println("The correct answer was: " + model.getTargetNumber());
         }
-
-        scanner.close();
     }
-    // 打印可用数字或符号
+
     private static void printAvailableCharacters(Map<String, Integer> characterColorMap) {
         System.out.println("Available characters:");
-        String allCharacters = "123456789+-*/=";
+        String allChar = "123456789+-*/=";
         System.out.print("White: ");
-        for (char c : allCharacters.toCharArray()) {
-            if (!characterColorMap.containsKey(String.valueOf(c))) {
-                System.out.print(c + " ");
+        for (char key : allChar.toCharArray()) {
+            if (!characterColorMap.containsKey(String.valueOf(key))) {
+                System.out.print(key + " ");
             }
         }
         System.out.println();
@@ -73,4 +81,3 @@ public class CLIApp {
         System.out.println();
     }
 }
-
