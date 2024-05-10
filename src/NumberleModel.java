@@ -8,17 +8,16 @@ import java.util.*;
  * NumberleModel 类是游戏的模型，负责处理游戏逻辑和数据。
  */
 public class NumberleModel extends Observable implements INumberleModel {
-    private String targetNumber; // 目标数字
-    private StringBuilder currentGuess; // 当前猜测
-    private int remainingAttempts; // 剩余尝试次数
-    private boolean gameWon; // 游戏是否胜利
-    private List<String> answers; // 存储数学等式的列表
-
+    private String targetNumber;
+    private StringBuilder currentGuess;
+    private int remainingAttempts;
+    private boolean gameWon;
+    private List<String> answers;
     private int[] colorState;
     private Map<String, Integer> characterColorMap;
-    private boolean showInvalidEquationError = true; // 第一个标志
-    private boolean showTargetEquation = true; // 第二个标志
-    private boolean randomizeEquation = true; // 第三个标志
+    private boolean flag1 = true;
+    private boolean flag2 = false;
+    private boolean flag3 = false;
     private String defaultAnswer = "1+1+1=3";
 
     /**
@@ -38,12 +37,17 @@ public class NumberleModel extends Observable implements INumberleModel {
         currentGuess = new StringBuilder("       "); // 初始化当前猜测为空白
         remainingAttempts = MAX_ATTEMPTS; // 初始化剩余尝试次数
         gameWon = false; // 初始化游戏胜利状态为假
-        if (randomizeEquation) {
+        if (flag3) {
             targetNumber = defaultAnswer;
+        }
+        if (flag2) {
+            System.out.println("The answer is:" + targetNumber);
         }
         setChanged(); // 设置数据已更改
         notifyObservers(); // 通知观察者
     }
+
+
 
     /**
      * 处理用户输入。
@@ -58,8 +62,7 @@ public class NumberleModel extends Observable implements INumberleModel {
         boolean validGuess = validInput && checkGuessValid();
 
         // 根据条件进行处理
-        if (!validInput || (showInvalidEquationError && !validGuess)) {
-            JOptionPane.showMessageDialog(null, "Invalid input!");
+        if (!validInput || (flag1 && !validGuess)) {
             return false;
         }
 
@@ -287,29 +290,36 @@ public class NumberleModel extends Observable implements INumberleModel {
     }
 
     // 获取标志状态的方法
-    public boolean isShowInvalidEquationError() {
-        return showInvalidEquationError;
+    public boolean getFlag1() {
+        return flag1;
     }
 
-    public void setShowInvalidEquationError(boolean showInvalidEquationError) {
-        this.showInvalidEquationError = showInvalidEquationError;
+
+    public boolean getFlag2() {
+        return flag2;
     }
 
-    public boolean isShowTargetEquation() {
-        return showTargetEquation;
+
+    public boolean getFlag3() {
+        return flag3;
     }
 
-    public void setShowTargetEquation(boolean showTargetEquation) {
-        this.showTargetEquation = showTargetEquation;
+    @Override
+    public void setFlag1() {
+        this.flag1 = !flag1;
     }
 
-    public boolean isRandomizeEquation() {
-        return randomizeEquation;
+    @Override
+    public void setFlag2() {
+        this.flag2 = !flag2;
     }
 
-    public void setRandomizeEquation(boolean randomizeEquation) {
-        this.randomizeEquation = randomizeEquation;
+    @Override
+    public void setFlag3() {
+        this.flag3 = !flag3;
     }
+
+
 
 
 

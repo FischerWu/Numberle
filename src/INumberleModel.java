@@ -13,4 +13,10 @@ public interface INumberleModel {
     void startNewGame();
     int[] getColorState();
     Map<String,Integer> getCharacterColorMap();
+    boolean getFlag1();
+    boolean getFlag2();
+    boolean getFlag3();
+    void setFlag1();
+    void setFlag2();
+    void setFlag3();
 }

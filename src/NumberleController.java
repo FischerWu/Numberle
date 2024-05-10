@@ -41,5 +41,17 @@ public class NumberleController {
         model.startNewGame(); // 开始新游戏
     }
 
+    public void changeFlag1() {
+        model.setFlag1();
+    }
+
+    public void changeFlag2() {
+        model.setFlag2();
+    }
+
+    public void changeFlag3() {
+        model.setFlag3();
+    }
+
 
 }
