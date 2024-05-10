@@ -10,12 +10,13 @@ public class NumberleView implements Observer {
     private final INumberleModel model;
     private final NumberleController controller;
     private final JFrame frame = new JFrame("Numberle");
-    private  int currentInputIndex = 0;
+    private  int currentIndex = 0;
     private final JTextField[][] inputFields = new JTextField[6][7];
     private JButton[] numberButtons;
     private JButton[] operatorButtons;
     private final JLabel attemptsLabel = new JLabel();
     private final JLabel targetLabel = new JLabel();
+    private JButton restartButton;
     private JPanel targetPanel;
 
     // 构造函数，初始化游戏视图。
@@ -26,58 +27,61 @@ public class NumberleView implements Observer {
         this.model = model;
         this.controller.startNewGame();
         ((NumberleModel)this.model).addObserver(this);
+        initializeMenu();
         initializeFrame();
         this.controller.setView(this);
         update((NumberleModel)this.model, null);
     }
 
-    // 初始化游戏窗口。
     private void initializeFrame() {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(600, 750);
         frame.setLayout(new BorderLayout());
 
-        JPanel topPanel = new JPanel();
+        initializeFirstPanel();
+        initializeSecondPanel();
+        initializeThirdPanel();
 
+        frame.setVisible(true);
+        frame.setLocationRelativeTo(null);
 
-        JPanel inputPanel = new JPanel();
-        inputPanel.setLayout(new GridLayout(6, 7, 10, 10));
-        inputPanel.setPreferredSize(new Dimension(420, 360));
+        currentIndex = 0;
+    }
 
-
+    private void initializeMenu() {
         JMenuBar menuBar = new JMenuBar(); // 创建菜单栏
 
         JMenu menu = new JMenu("Menu"); // 创建菜单
-        JMenuItem menuItem1 = new JMenuItem("Error on Invalid Equation");
+        JMenuItem menuItem1 = new JMenuItem("Invalid Equation");
         menuItem1.setSelected(true);
         JMenuItem menuItem2 = new JMenuItem("Show Target Equation");
         menuItem2.setSelected(true);
-        JMenuItem menuItem3 = new JMenuItem("Randomize Equation");
+        JMenuItem menuItem3 = new JMenuItem("Default Equation");
         menuItem3.setSelected(true);
 
         // 设置菜单项背景颜色
-        menuItem1.setBackground(model.getFlag1() ? Color.BLUE : Color.WHITE);
-        menuItem2.setBackground(model.getFlag2() ? Color.BLUE : Color.WHITE);
-        menuItem3.setBackground(model.getFlag3() ? Color.BLUE : Color.WHITE);
+        menuItem1.setBackground(controller.getFlag1() ? Color.BLUE : Color.WHITE);
+        menuItem2.setBackground(controller.getFlag2() ? Color.BLUE : Color.WHITE);
+        menuItem3.setBackground(controller.getFlag3() ? Color.BLUE : Color.WHITE);
 
         // 为菜单项按钮添加点击事件监听器
         menuItem1.addActionListener(e -> {
             controller.changeFlag1();
-            boolean currentState = model.getFlag1();
+            boolean currentState = controller.getFlag1();
             menuItem1.setBackground(currentState ? Color.BLUE : Color.WHITE);
         });
 
         menuItem2.addActionListener(e -> {
             controller.changeFlag2();
-            boolean currentState = model.getFlag2();
+            boolean currentState = controller.getFlag2();
             menuItem2.setBackground(currentState ? Color.BLUE : Color.WHITE);
             targetPanel.setVisible(currentState);
         });
 
         menuItem3.addActionListener(e -> {
             controller.changeFlag3();
-            boolean currentState = model.getFlag3();
-            model.initialize();
+            boolean currentState = controller.getFlag3();
+            this.controller.startNewGame();
             menuItem3.setBackground(currentState ? Color.BLUE : Color.WHITE);
         });
         menu.add(menuItem1);
@@ -85,10 +89,16 @@ public class NumberleView implements Observer {
         menu.add(menuItem3);
         menuBar.add(menu);
         frame.setJMenuBar(menuBar);
+    }
 
-        /*
-        初始化6*7面板
-         */
+    private void initializeFirstPanel() {
+        JPanel firstPanel = new JPanel();
+
+        JPanel inputPanel = new JPanel();
+        inputPanel.setLayout(new GridLayout(6, 7, 10, 10));
+        inputPanel.setPreferredSize(new Dimension(420, 360));
+
+        // 初始化6*7面板
         for (int j = 0; j < inputFields.length; j++) {
             for (int i = 0; i < inputFields[j].length; i++) {
                 inputFields[j][i] = new JTextField();
@@ -101,14 +111,13 @@ public class NumberleView implements Observer {
             }
         }
 
-        topPanel.add(inputPanel);
-        frame.add(topPanel, BorderLayout.NORTH);
+        firstPanel.add(inputPanel);
+        frame.add(firstPanel, BorderLayout.NORTH);
+    }
 
-        /*
-        中间标签，尝试次数和restart
-         */
-        JPanel middlePanel = new JPanel();
-        middlePanel.setLayout(new BoxLayout(middlePanel, BoxLayout.Y_AXIS));
+    private void initializeSecondPanel() {
+        JPanel secondPanel = new JPanel();
+        secondPanel.setLayout(new BoxLayout(secondPanel, BoxLayout.Y_AXIS));
         JPanel timesPanel = new JPanel();
         timesPanel.setLayout(new GridLayout(3, 1));
         timesPanel.setPreferredSize(new Dimension(580, 75));
@@ -118,35 +127,32 @@ public class NumberleView implements Observer {
         targetPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         targetPanel.add(targetLabel);
         targetPanel.setPreferredSize(new Dimension(targetPanel.getPreferredSize().width, targetLabel.getPreferredSize().height));
-        targetPanel.setVisible(model.getFlag2());
+        targetPanel.setVisible(controller.getFlag2());
 
-        JButton restartButton = new JButton("Restart");
+        restartButton = new JButton("Restart");
         restartButton.setBackground(new Color(220, 225, 237));
         restartButton.setEnabled(false);
         restartButton.addActionListener(e -> {
             controller.startNewGame();
             restartButton.setEnabled(false);
-            currentInputIndex = 0;
+            currentIndex = 0;
         });
         attemptsPanel.add(restartButton);
         timesPanel.add(attemptsPanel);
 
-        middlePanel.add(timesPanel);
-        middlePanel.add(targetPanel);
-        frame.add(middlePanel, BorderLayout.CENTER);
+        secondPanel.add(timesPanel);
+        secondPanel.add(targetPanel);
+        frame.add(secondPanel, BorderLayout.CENTER);
+    }
 
-
-        /*
-        数字键盘
-         */
-        JPanel bottomPanel = new JPanel();
+    private void initializeThirdPanel() {
+        JPanel thirdPanel = new JPanel();
         JPanel keyboardPanel = new JPanel();
         keyboardPanel.setLayout(new GridLayout(3, 1));
         keyboardPanel.setPreferredSize(new Dimension(580, 180));
         JPanel numberPanel = new JPanel();
         numberPanel.setLayout(new GridLayout(1, 10, 10, 10));
 
-        // 创建一个包含10个按钮的数组
         numberButtons = new JButton[10];
         for (int i = 0; i < 10; i++) {
             JButton button = new JButton(Integer.toString(i));
@@ -154,11 +160,11 @@ public class NumberleView implements Observer {
                 if (controller.isGameOver()){
                     return;
                 }
-                if (currentInputIndex < inputFields[getCurrentRow()].length) {
-                    inputFields[getCurrentRow()][currentInputIndex].setText(button.getText());
-                    currentInputIndex++;
+                if (currentIndex < inputFields[getCurrentRow()].length) {
+                    inputFields[getCurrentRow()][currentIndex].setText(button.getText());
+                    currentIndex++;
                 } else {
-                    currentInputIndex = 7;
+                    currentIndex = 7;
                 }
             });
             button.setPreferredSize(new Dimension(50, 50));
@@ -168,33 +174,29 @@ public class NumberleView implements Observer {
         }
         keyboardPanel.add(numberPanel);
 
-        /*
-        清除键
-         */
         JPanel operatorPanel = new JPanel();
         JPanel deletePanel = new JPanel();
         JButton deleteButton = new JButton("Delete");
         deleteButton.setPreferredSize(new Dimension(120, 50));
         deleteButton.addActionListener(e -> {
-            currentInputIndex--;
+            currentIndex--;
             if (controller.isGameOver()){
                 return;
             }
-            if (currentInputIndex < 0) {
+            if (currentIndex < 0) {
+                currentIndex = 0;
                 return;
             }
-            if (currentInputIndex == 7) {
+            if (currentIndex == 7) {
                 return;
             }
-            inputFields[getCurrentRow()][currentInputIndex].setText("");
+            inputFields[getCurrentRow()][currentIndex].setText("");
         });
         deleteButton.setBackground(new Color(220, 225, 237));
         deletePanel.add(deleteButton);
         operatorPanel.add(deletePanel);
 
-        /*
-        操作符按钮
-         */
+
         operatorButtons = new JButton[5];
         String[] operatorLabels = {"+", "-", "*", "/", "="};
         for (int i = 0; i < operatorLabels.length; i++) {
@@ -204,11 +206,11 @@ public class NumberleView implements Observer {
                 if (controller.isGameOver()){
                     return;
                 }
-                if (currentInputIndex < inputFields[getCurrentRow()].length) {
-                    inputFields[getCurrentRow()][currentInputIndex].setText(button.getText());
-                    currentInputIndex++;
+                if (currentIndex < inputFields[getCurrentRow()].length) {
+                    inputFields[getCurrentRow()][currentIndex].setText(button.getText());
+                    currentIndex++;
                 } else {
-                    currentInputIndex = 7;
+                    currentIndex = 7;
                 }
             });
             operatorButtons[i].setPreferredSize(new Dimension(50, 50));
@@ -216,15 +218,13 @@ public class NumberleView implements Observer {
             operatorPanel.add(operatorButtons[i]);
         }
 
-        /*
-        提交功能
-         */
+
         JPanel submitPanel = new JPanel();
         JButton submitButton = new JButton("Enter");
         submitButton.setPreferredSize(new Dimension(120, 50));
         submitButton.addActionListener(e -> {
             if (controller.isGameOver()){
-                JOptionPane.showMessageDialog(frame, "Game over! The target number was " + controller.getTargetWord()); // 显示游戏结束消息对话框
+                JOptionPane.showMessageDialog(frame, "Game over! The target number was " + controller.getTargetWord());
                 return;
             }
             StringBuilder guess = new StringBuilder();
@@ -232,16 +232,15 @@ public class NumberleView implements Observer {
                 guess.append(inputField.getText());
             }
 
-            if (currentInputIndex != 7) {
+            if (currentIndex != 7) {
                 JOptionPane.showMessageDialog(frame, "Too short!");
                 return;
             }
-            currentInputIndex = 0;
+            currentIndex = 0;
 
             if (!controller.processInput(guess.toString())) {
                 JOptionPane.showMessageDialog(frame, "Invalid input!");
-                // currentInputIndex =0;
-                currentInputIndex = 7;
+                currentIndex = 7;
             }
 
             restartButton.setEnabled(true);
@@ -252,69 +251,75 @@ public class NumberleView implements Observer {
 
         keyboardPanel.add(operatorPanel);
 
-        bottomPanel.add(keyboardPanel);
-        frame.add(bottomPanel, BorderLayout.SOUTH);
-        frame.setVisible(true);
-        frame.setLocationRelativeTo(null);
-
-
-        currentInputIndex = 0;
+        thirdPanel.add(keyboardPanel);
+        frame.add(thirdPanel, BorderLayout.SOUTH);
     }
 
-    // 视图更新方法
     @Override
     public void update(java.util.Observable o, Object arg) {
         attemptsLabel.setText("Attempts remaining: " + controller.getRemainingAttempts());
         targetLabel.setText("TargetNumber: " + controller.getTargetWord());
         String currentGuess = controller.getCurrentGuess().toString();
-        if (getCurrentRow() <= 0){ // 如果当前行小于等于0
+        if (getCurrentRow() <= 0){
             if (currentGuess.equals("       ")) {
-                initButtons(); // 初始化按钮
+                initInputFields();
+                initKeyboard();
             }
             return;
         }
         updateInputFieldColors();
-        updateButtonColors();
+        updateKeyBoardColors();
 
         if (controller.isGameOver()) {
             if (controller.isGameWon()) {
                 JOptionPane.showMessageDialog(frame, "Congratulations! You won!"); // 显示胜利消息对话框
-            } else { // 如果游戏失败
+            } else {
                 JOptionPane.showMessageDialog(frame, "Game over! The target number was " + controller.getTargetWord()); // 显示失败消息对话框
             }
         }
     }
 
 
-    private void initButtons() {
-        for (JTextField[] guessText : inputFields) { // 遍历文本框数组
-            for (JTextField jTextField : guessText) { // 遍历文本框
-                jTextField.setText(""); // 设置文本为空
-                jTextField.setBackground(Color.WHITE); // 设置背景颜色为白色
+
+    private void initInputFields() {
+        for (JTextField[] guessText : inputFields) {
+            for (JTextField jTextField : guessText) {
+                jTextField.setText("");
+                jTextField.setBackground(Color.WHITE);
             }
         }
     }
 
+    private void initKeyboard() {
+        for (JButton button : numberButtons) {
+            button.setBackground(Color.WHITE);
+            button.setForeground(Color.BLACK);
+        }
+
+        for (JButton button : operatorButtons) {
+            button.setBackground(Color.WHITE);
+            button.setForeground(Color.BLACK);
+        }
+    }
 
 
     private int getCurrentRow() {
-        return INumberleModel.MAX_ATTEMPTS - model.getRemainingAttempts(); // 返回当前行数
+        return INumberleModel.MAX_ATTEMPTS - controller.getRemainingAttempts();
     }
-
 
     private void updateInputFieldColors() {
         int[] colorState = model.getColorState();
         int currentRow = getCurrentRow() - 1;
         if (currentRow >= 0 && currentRow < inputFields.length) {
-            for (int i = 0; i < colorState.length; i++) { // 遍历颜色状态数组
-                switch (colorState[i]) { // 根据颜色状态设置文本框背景颜色
-                    case 1: // 绿色
+            for (int i = 0; i < colorState.length; i++) {
+                switch (colorState[i]) {
+                    case 1:
                         inputFields[currentRow][i].setBackground(Color.GREEN);
                         break;
-                    case 2: // 橙色
+                    case 2:
                         inputFields[currentRow][i].setBackground(Color.ORANGE);
                         break;
-                    case 3: // 深灰色
+                    case 3:
                         inputFields[currentRow][i].setBackground(Color.DARK_GRAY);
                         break;
                     default:
@@ -325,68 +330,40 @@ public class NumberleView implements Observer {
         }
     }
 
-    private void updateButtonColors() {
+    private void updateKeyBoardColors() {
         Map<String,Integer> characterColorMap = model.getCharacterColorMap();
-        // 遍历操作符按钮并更新颜色
         for (JButton button : operatorButtons) {
-            String operator = button.getText(); // 获取按钮上的操作符
-            int colorIndex = 0; // 默认颜色索引
-
-            // 检查characterColorMap中是否存在该操作符的颜色索引
-            if (characterColorMap.containsKey(operator)) {
-                colorIndex = characterColorMap.get(operator);
-            }
-            // 根据colorIndex更新按钮颜色
-            switch (colorIndex) {
-                case 1: // 绿色
-                    button.setForeground(Color.GREEN);
-                    button.setBackground(Color.GREEN);
-                    button.setOpaque(true);
-                    break;
-                case 2: // 橙色
-                    button.setForeground(Color.ORANGE);
-                    button.setBackground(Color.ORANGE);
-                    button.setOpaque(true);
-                    break;
-                case 3: // 深灰色
-                    button.setForeground(Color.DARK_GRAY);
-                    button.setBackground(Color.DARK_GRAY);
-                    button.setOpaque(true);
-                    break;
-                default: // 默认颜色
-                    button.setForeground(Color.BLACK);
-                    break;
-            }
+            String operator = button.getText();
+            int colorIndex = characterColorMap.getOrDefault(operator, 0);
+            setKeyBoardColor(button, colorIndex);
         }
         for (JButton button : numberButtons) {
-            String operator = button.getText(); // 获取按钮上的操作符
-            int colorIndex = 0; // 默认颜色索引
+            String operator = button.getText();
+            int colorIndex = characterColorMap.getOrDefault(operator, 0);
+            setKeyBoardColor(button, colorIndex);
+        }
+    }
 
-            // 检查characterColorMap中是否存在该操作符的颜色索引
-            if (characterColorMap.containsKey(operator)) {
-                colorIndex = characterColorMap.get(operator);
-            }
-            // 根据colorIndex更新按钮颜色
-            switch (colorIndex) {
-                case 1: // 绿色
-                    button.setForeground(Color.GREEN);
-                    button.setBackground(Color.GREEN);
-                    button.setOpaque(true);
-                    break;
-                case 2: // 橙色
-                    button.setForeground(Color.ORANGE);
-                    button.setBackground(Color.ORANGE);
-                    button.setOpaque(true);
-                    break;
-                case 3: // 深灰色
-                    button.setForeground(Color.DARK_GRAY);
-                    button.setBackground(Color.ORANGE);
-                    button.setOpaque(true);
-                    break;
-                default: // 默认颜色
-                    button.setForeground(Color.BLACK);
-                    break;
-            }
+    private void setKeyBoardColor(JButton button, int colorIndex) {
+        switch (colorIndex) {
+            case 1:
+                button.setForeground(Color.GREEN);
+                button.setBackground(Color.GREEN);
+                button.setOpaque(true);
+                break;
+            case 2:
+                button.setForeground(Color.ORANGE);
+                button.setBackground(Color.ORANGE);
+                button.setOpaque(true);
+                break;
+            case 3:
+                button.setForeground(Color.DARK_GRAY);
+                button.setBackground(Color.DARK_GRAY);
+                button.setOpaque(true);
+                break;
+            default:
+                button.setForeground(Color.BLACK);
+                break;
         }
     }
 }

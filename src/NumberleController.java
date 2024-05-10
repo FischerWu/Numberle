@@ -12,33 +12,45 @@ public class NumberleController {
     }
 
     public boolean processInput(String input) {
-        return model.processInput(input); // 处理用户输入
+        return model.processInput(input);
     }
 
     public boolean isGameOver() {
-        return model.isGameOver(); // 检查游戏是否结束
+        return model.isGameOver();
     }
 
     public boolean isGameWon() {
-        return model.isGameWon(); // 检查游戏是否获胜
+        return model.isGameWon();
     }
 
 
     public String getTargetWord() {
-        return model.getTargetNumber(); // 获取目标数字
+        return model.getTargetNumber();
     }
 
     public StringBuilder getCurrentGuess() {
 
-        return model.getCurrentGuess();  // 获取当前猜测
+        return model.getCurrentGuess();
     }
 
     public int getRemainingAttempts() {
-        return model.getRemainingAttempts(); // 获取剩余尝试次数
+        return model.getRemainingAttempts();
     }
 
     public void startNewGame() {
-        model.startNewGame(); // 开始新游戏
+        model.startNewGame();
+    }
+
+    public boolean getFlag1() {
+        return model.getFlag1();
+    }
+
+    public boolean getFlag2() {
+        return model.getFlag2();
+    }
+
+    public boolean getFlag3() {
+        return model.getFlag3();
     }
 
     public void changeFlag1() {

@@ -1,4 +1,3 @@
-import javax.swing.*;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -12,33 +11,31 @@ public class NumberleModel extends Observable implements INumberleModel {
     private StringBuilder currentGuess;
     private int remainingAttempts;
     private boolean gameWon;
-    private List<String> answers;
     private int[] colorState;
-    private Map<String, Integer> characterColorMap;
+    private Map<String, Integer> charColorMap;
     private boolean flag1 = true;
     private boolean flag2 = false;
     private boolean flag3 = false;
-    private String defaultAnswer = "1+1+1=3";
+    private final String defaultTarget = "1+1+1=3";
 
     /**
      * NumberleModel 类的构造函数，初始化游戏模型。
      */
     public NumberleModel() {
-        loadAnswerFromFile("equations.txt");
+        loadAnswerFromFile();
     }
-
 
     /**
      * 初始化游戏。
      */
     @Override
     public void initialize() {
-        loadAnswerFromFile("equations.txt");
+        loadAnswerFromFile();
         currentGuess = new StringBuilder("       "); // 初始化当前猜测为空白
         remainingAttempts = MAX_ATTEMPTS; // 初始化剩余尝试次数
         gameWon = false; // 初始化游戏胜利状态为假
         if (flag3) {
-            targetNumber = defaultAnswer;
+            targetNumber = defaultTarget;
         }
         if (flag2) {
             System.out.println("The answer is:" + targetNumber);
@@ -52,13 +49,13 @@ public class NumberleModel extends Observable implements INumberleModel {
     /**
      * 处理用户输入。
      *
-     * @param input 用户输入的字符串
+     * @param expression 用户输入的字符串
      * @return 输入是否有效
      */
     @Override
-    public boolean processInput(String input) {
-        currentGuess = new StringBuilder(input);
-        boolean validInput = isValidInput(input);
+    public boolean processInput(String expression) {
+        currentGuess = new StringBuilder(expression);
+        boolean validInput = isValidInput(expression);
         boolean validGuess = validInput && checkGuessValid();
 
         // 根据条件进行处理
@@ -67,10 +64,10 @@ public class NumberleModel extends Observable implements INumberleModel {
         }
 
         setColorState();
-        setColorState(input,targetNumber);
+        setColorStateMap(expression, targetNumber);
 
         remainingAttempts--;
-        if (input.equals(targetNumber)) {
+        if (expression.equals(targetNumber)) {
             gameWon = true;
         }
         setChanged();
@@ -92,8 +89,8 @@ public class NumberleModel extends Observable implements INumberleModel {
         String right = parts[1];
 
         try {
-            double result = getResult(left);
-            return result == getResult(right);
+            double result = calculateResult(left);
+            return result == calculateResult(right);
         } catch (Exception e) {
             return false;
         }
@@ -102,64 +99,45 @@ public class NumberleModel extends Observable implements INumberleModel {
     /**
      * 计算表达式的结果。
      *
-     * @param input 表达式字符串
+
      * @return 表达式的结果
      */
-    private double getResult(String input) {
-        String[] parts = input.split("(?=[+\\-×÷*/])|(?<=[+\\-×÷*/])");
+    private double calculateResult(String expression) {
+        String[] parts = expression.split("(?=[+\\-×÷*/])|(?<=[+\\-×÷*/])");
         double result = 0;
         Stack<String> stack = new Stack<>();
         for (int i = 0; i < parts.length; i++) {
-            String part = parts[i];
-            assert part != null && !part.isEmpty();
-            switch (part) {
-                case "+":
-                    stack.push(part);
-                    break;
-                case "-":
-                    stack.push(part);
-                    break;
-                case "*":
+            String currentPart = parts[i];
+            assert currentPart != null && !currentPart.isEmpty();
+            switch (currentPart) {
+                case "*", "/" -> {
                     double b = Double.parseDouble(stack.pop());
                     assert (parts[i + 1] != null && parts[i + 1].matches("\\d+"));
                     double a = Double.parseDouble(parts[i + 1]);
                     i++;
-                    stack.push(String.valueOf(a * b));
-                    break;
-                case "/":
-                    double bDiv = Double.parseDouble(stack.pop());
-                    assert (parts[i + 1] != null && parts[i + 1].matches("\\d+"));
-                    double aDiv = Double.parseDouble(parts[i + 1]);
-                    i++;
-                    stack.push(String.valueOf(bDiv / aDiv));
-                    break;
-                default:
-                    stack.push(part);
-                    break;
+                    stack.push(currentPart.equals("*") ? String.valueOf(a * b) : String.valueOf(b / a));
+                }
+                default -> stack.push(currentPart);
             }
         }
 
         for (int i = 0; i < stack.size(); i++) {
-            String s = stack.get(i);
-            switch (s) {
-                case "+":
-                    double bAdd = Double.parseDouble(stack.get(i + 1));
-                    result += bAdd;
+            String currentStackItem = stack.get(i);
+            switch (currentStackItem) {
+                case "+", "-" -> {
+                    double nextStackItem = Double.parseDouble(stack.get(i + 1));
+                    result = currentStackItem.equals("+") ? result + nextStackItem : result - nextStackItem;
                     i++;
-                    break;
-                case "-":
-                    double bSub = Double.parseDouble(stack.get(i + 1));
-                    result -= bSub;
-                    i++;
-                    break;
-                default:
-                    assert s.matches("\\d+");
-                    result = Double.parseDouble(s);
-                    break;
+                }
+                default -> {
+                    assert currentStackItem.matches("\\d+");
+                    result = Double.parseDouble(currentStackItem);
+                }
             }
         }
         return result;
     }
+
 
     /**
      * 判断游戏是否结束。
@@ -219,20 +197,20 @@ public class NumberleModel extends Observable implements INumberleModel {
         initialize(); // 调用初始化方法
     }
 
-    private void loadAnswerFromFile(String filePath) {
-        answers = new ArrayList<>();
-        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+    private void loadAnswerFromFile() {
+        List<String> targetNumberList = new ArrayList<>();
+        try (BufferedReader reader = new BufferedReader(new FileReader("equations.txt"))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                answers.add(line.trim()); // 将答案添加到列表中
+                targetNumberList.add(line.trim()); // 将答案添加到列表中
             }
         } catch (IOException e) {
             System.err.println("Error reading the answers file: " + e.getMessage());
             return;
         }
-        if (!answers.isEmpty()) {
+        if (!targetNumberList.isEmpty()) {
             Random rand = new Random();
-            targetNumber = answers.get(rand.nextInt(answers.size()));
+            targetNumber = targetNumberList.get(rand.nextInt(targetNumberList.size()));
         } else {
             System.err.println("No answers found in the file.");
         }
@@ -244,36 +222,29 @@ public class NumberleModel extends Observable implements INumberleModel {
         for (int i = 0; i < currentGuess.length(); i++) {
             char c = currentGuess.charAt(i);
             if (c == targetNumber.charAt(i)) {
-                colorState[i] = 1; // 绿色
+                colorState[i] = 1;
             } else if (targetNumber.contains(String.valueOf(c))) {
-                colorState[i] = 2; // 橙色
+                colorState[i] = 2;
             } else {
-                colorState[i] = 3; // 深灰色
+                colorState[i] = 3;
             }
         }
     }
 
-    private void setColorState(String currentGuess, String targetNumber) {
-        // 初始化颜色状态数组
+    private void setColorStateMap(String currentGuess, String targetNumber) {
         colorState = new int[currentGuess.length()];
-        // 初始化字符颜色映射
-        characterColorMap = new HashMap<>();
-        // 遍历当前猜测的每个字符
+        charColorMap = new HashMap<>();
         for (int i = 0; i < currentGuess.length(); i++) {
             char c = currentGuess.charAt(i);
-            int colorIndex = 0; // 初始化颜色索引
-            // 检查字符是否与目标数字的相应位置匹配
             if (c == targetNumber.charAt(i)) {
-                colorIndex = 1; // 绿色
+                colorState[i] = 1;
             } else if (targetNumber.contains(String.valueOf(c))) {
-                colorIndex = 2; // 橙色
+                colorState[i] = 2;
             } else {
-                colorIndex = 3; // 深灰色
+                colorState[i] = 3;
             }
-            // 更新颜色状态数组
-            colorState[i] = colorIndex;
-            // 更新或添加字符颜色映射
-            characterColorMap.put(String.valueOf(c), colorIndex);
+            // colorState[i] = colorIndex;
+            charColorMap.put(String.valueOf(c), colorState[i]);
         }
     }
 
@@ -282,7 +253,7 @@ public class NumberleModel extends Observable implements INumberleModel {
     }
 
     public Map<String, Integer> getCharacterColorMap() {
-        return characterColorMap;
+        return charColorMap;
     }
 
     private boolean isValidInput(String input) {
