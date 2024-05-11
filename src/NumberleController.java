@@ -29,7 +29,6 @@ public class NumberleController {
     }
 
     public StringBuilder getCurrentGuess() {
-
         return model.getCurrentGuess();
     }
 
@@ -65,5 +64,7 @@ public class NumberleController {
         model.setFlag3();
     }
 
-
+    public void updateRestartButton() {
+        view.enableRestartButton(INumberleModel.MAX_ATTEMPTS - model.getRemainingAttempts() != 0 || model.isGameWon());
+    }
 }

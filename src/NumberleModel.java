@@ -3,9 +3,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
 
-/**
- * NumberleModel 类是游戏的模型，负责处理游戏逻辑和数据。
- */
 public class NumberleModel extends Observable implements INumberleModel {
     private String targetNumber;
     private StringBuilder currentGuess;
@@ -13,46 +10,68 @@ public class NumberleModel extends Observable implements INumberleModel {
     private boolean gameWon;
     private int[] colorState;
     private Map<String, Integer> charColorMap;
+    // Set Invalid Equation
     private boolean flag1 = true;
-    private boolean flag2 = true;
-    private boolean flag3 = false;
-    private final String defaultTarget = "1+1+1=3";
+    // Set Show Target Equation
+    private boolean flag2 = false;
+    // Set Default Equation
+    private boolean flag3 = true;
+    private final String defaultTarget = "6*1-3=3";
 
 
-    /**
-     * 初始化游戏。
-     */
+
+    /*@ Initializes or resets the model to start a new game.
+    @ invariant invariant();
+    @ invariant remainingAttempts >= 0;
+    @ requires fileReader != null && !targetNumberList.isEmpty();
+    @ requires MAX_ATTEMPTS = 6;
+    @ ensures targetNumber != null;
+    @ ensures currentGuess != null;
+    @ ensures remainingAttempts == MAX_ATTEMPTS;
+    @ ensures gameWon == false;
+    @*/
+
     @Override
     public void initialize() {
+        assert MAX_ATTEMPTS == 6 : "MAX_ATTEMPTS must be 6";
+
         loadTargetNumber();
-        currentGuess = new StringBuilder("       "); // 初始化当前猜测为空白
-        remainingAttempts = MAX_ATTEMPTS; // 初始化剩余尝试次数
-        gameWon = false; // 初始化游戏胜利状态为假
+        currentGuess = new StringBuilder("       ");
+        remainingAttempts = MAX_ATTEMPTS;
+        gameWon = false;
+
+
         if (flag3) {
             targetNumber = defaultTarget;
         }
         if (flag2) {
-            System.out.println("The answer is:" + targetNumber);
+            assert targetNumber != null : "targetNumber must not be null to print";
+            System.out.println("The targetNumber is:" + targetNumber);
         }
-        setChanged(); // 设置数据已更改
-        notifyObservers(); // 通知观察者
+        setChanged();
+        notifyObservers();
     }
 
 
 
-    /**
-     * proc
-     *
-     * @param expression 用户输入的字符串
-     * @return 输入是否有效
-     */
+    /* Processes the user input expression.
+    @ invariant invariant();
+    @ requires expression is String;
+    @ requires expression != null;
+    @ ensures isValidInput(expression) && checkValid();
+    @ param expression. The user input expression to process.
+    @ return boolean. True if the input is valid and the guess is correct, false otherwise.
+    @*/
     @Override
     public boolean processInput(String expression) {
+        assert expression != null : "Input expression must not be null";
+        // assert isValidInput(expression) : "Invalid input expression";
+
         currentGuess = new StringBuilder(expression);
         boolean validInput = isValidInput(expression);
-        boolean validGuess = validInput && checkGuessValid();
+        boolean validGuess = validInput && checkValid();
 
-        if (!validInput || (flag1 && !validGuess)) {
+        if (!validGuess && flag1) {
             return false;
         }
 
@@ -60,6 +79,7 @@ public class NumberleModel extends Observable implements INumberleModel {
         setColorStateMap(expression, targetNumber);
 
         remainingAttempts--;
+        assert remainingAttempts >= 0 : "remainingAttempts must not be negative";
         if (expression.equals(targetNumber)) {
             gameWon = true;
         }
@@ -68,12 +88,7 @@ public class NumberleModel extends Observable implements INumberleModel {
         return true;
     }
 
-    /**
-     * 检查猜测是否有效。
-     *
-     * @return 猜测是否有效
-     */
-    private boolean checkGuessValid() {
+    private boolean checkValid() {
         String[] parts = currentGuess.toString().split("=");
         if (parts.length != 2) {
             return false;
@@ -89,19 +104,17 @@ public class NumberleModel extends Observable implements INumberleModel {
         }
     }
 
-    /**
-     * 计算表达式的结果。
-     *
 
-     * @return 表达式的结果
-     */
     private double calculateResult(String expression) {
-        String[] parts = expression.split("(?=[+\\-×÷*/])|(?<=[+\\-×÷*/])");
+        // Split the expression using regular expressions to handle operator precedence
+        String[] parts = expression.split("(?=[+\\-*/])|(?<=[+\\-*/])");
         double result = 0;
+        // Stack for storing operands and operators
         Stack<String> stack = new Stack<>();
         for (int i = 0; i < parts.length; i++) {
             String currentPart = parts[i];
             assert currentPart != null && !currentPart.isEmpty();
+            // Process differently depending on whether the current part is an operator or operand
             switch (currentPart) {
                 case "*", "/" -> {
                     double b = Double.parseDouble(stack.pop());
@@ -114,6 +127,7 @@ public class NumberleModel extends Observable implements INumberleModel {
             }
         }
 
+        // Iterate over all items in the stack to compute the final result
         for (int i = 0; i < stack.size(); i++) {
             String currentStackItem = stack.get(i);
             switch (currentStackItem) {
@@ -123,7 +137,7 @@ public class NumberleModel extends Observable implements INumberleModel {
                     i++;
                 }
                 default -> {
-                    assert currentStackItem.matches("\\d+");
+                    // assert currentStackItem.matches("\\d+");
                     result = Double.parseDouble(currentStackItem);
                 }
             }
@@ -132,65 +146,43 @@ public class NumberleModel extends Observable implements INumberleModel {
     }
 
 
-    /**
-     * 判断游戏是否结束。
-     *
-     * @return 游戏是否结束
-     */
     @Override
     public boolean isGameOver() {
         return remainingAttempts <= 0 || gameWon;
     }
 
-    /**
-     * 判断游戏是否胜利。
-     *
-     * @return 游戏是否胜利
-     */
+
     @Override
     public boolean isGameWon() {
         return gameWon;
     }
 
-    /**
-     * 获取目标数字。
-     *
-     * @return 目标数字
-     */
+
     @Override
     public String getTargetNumber() {
         return targetNumber;
     }
 
-    /**
-     * 获取当前猜测。
-     *
-     * @return 当前猜测
-     */
+
     @Override
     public StringBuilder getCurrentGuess() {
         return currentGuess;
     }
 
-    /**
-     * 获取剩余尝试次数。
-     *
-     * @return 剩余尝试次数
-     */
+
     @Override
     public int getRemainingAttempts() {
         return remainingAttempts;
     }
 
-    /**
-     * 开始新游戏。
-     */
     @Override
     public void startNewGame() {
         initialize();
     }
 
-
+    /**
+     * Load the target number from the file and randomly select one as the target number for the game.
+     */
     private void loadTargetNumber() {
         List<String> targetNumberList = new ArrayList<>();
         try (BufferedReader reader = new BufferedReader(new FileReader("equations.txt"))) {
@@ -211,6 +203,13 @@ public class NumberleModel extends Observable implements INumberleModel {
     }
 
 
+    /**
+     * Set the color state of each character of the current guess with the target digit.
+     * The color state is used to indicate the accuracy of the guess:
+     * 1 means the character is in the correct position, set Green.
+     * 2 indicates that the character is present in the target digit, but in an incorrect position, set Orange.
+     * 3 indicates that the character is neither in the target digit nor in a matching position, set Gray.
+     */
     private void setColorState() {
         colorState = new int[currentGuess.length()];
         for (int i = 0; i < currentGuess.length(); i++) {
@@ -225,6 +224,10 @@ public class NumberleModel extends Observable implements INumberleModel {
         }
     }
 
+    /*
+     * Set the current guess color state map, which maps each character to a color state.
+     * This method is similar to setColorState, but also updates a mapping that maps the character to its color state.
+     */
     private void setColorStateMap(String currentGuess, String targetNumber) {
         colorState = new int[currentGuess.length()];
         charColorMap = new HashMap<>();
@@ -245,12 +248,12 @@ public class NumberleModel extends Observable implements INumberleModel {
         return colorState;
     }
 
-    public Map<String, Integer> getCharacterColorMap() {
+    public Map<String, Integer> getCharColorMap() {
         return charColorMap;
     }
 
     private boolean isValidInput(String input) {
-        return input.length() == 7 && input.contains("=") && input.matches("[0-9+\\-×÷*/=]+");
+        return input.length() == 7 && input.contains("=") && input.matches("[0-9+\\-*/=]+");
     }
 
     public boolean getFlag1() {

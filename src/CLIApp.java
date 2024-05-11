@@ -20,6 +20,10 @@ public class CLIApp {
         INumberleModel model = new NumberleModel();
         model.initialize();
         System.out.println("Welcome to Numberle!");
+        System.out.println("You can enter your own equation, aiming to match the target equation");
+        System.out.println("You have 6 attempts to guess the target equation");
+        System.out.println("When calculating, you can use numbers (0-9) and arithmetic signs (+ - * / =)");
+        System.out.println("You can enter 7 characters");
         System.out.println("Remaining attempts: " + model.getRemainingAttempts());
 
         while (!model.isGameOver()) {
@@ -37,7 +41,7 @@ public class CLIApp {
 
             System.out.println("Remaining attempts: " + model.getRemainingAttempts());
 
-            printAvailableCharacters(model.getCharacterColorMap());
+            printAvailChar(model.getCharColorMap());
         }
 
         if (model.isGameWon()) {
@@ -48,32 +52,32 @@ public class CLIApp {
         }
     }
 
-    private static void printAvailableCharacters(Map<String, Integer> characterColorMap) {
+    private static void printAvailChar(Map<String, Integer> charColorMap) {
         System.out.println("Available characters:");
         String allChar = "123456789+-*/=";
         System.out.print("White: ");
         for (char key : allChar.toCharArray()) {
-            if (!characterColorMap.containsKey(String.valueOf(key))) {
+            if (!charColorMap.containsKey(String.valueOf(key))) {
                 System.out.print(key + " ");
             }
         }
         System.out.println();
         System.out.print("Green: ");
-        characterColorMap.forEach((character, colorIndex) -> {
+        charColorMap.forEach((character, colorIndex) -> {
             if (colorIndex == 1) {
                 System.out.print(character + " ");
             }
         });
         System.out.println();
         System.out.print("Orange: ");
-        characterColorMap.forEach((character, colorIndex) -> {
+        charColorMap.forEach((character, colorIndex) -> {
             if (colorIndex == 2) {
                 System.out.print(character + " ");
             }
         });
         System.out.println();
-        System.out.print("Dark Gray: ");
-        characterColorMap.forEach((character, colorIndex) -> {
+        System.out.print("Gray: ");
+        charColorMap.forEach((character, colorIndex) -> {
             if (colorIndex == 3) {
                 System.out.print(character + " ");
             }
