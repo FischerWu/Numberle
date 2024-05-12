@@ -30,7 +30,6 @@ public class NumberleModel extends Observable implements INumberleModel {
     @ ensures remainingAttempts == MAX_ATTEMPTS;
     @ ensures gameWon == false;
     @*/
-
     @Override
     public void initialize() {
         assert MAX_ATTEMPTS == 6 : "MAX_ATTEMPTS must be 6";
@@ -65,7 +64,6 @@ public class NumberleModel extends Observable implements INumberleModel {
     @Override
     public boolean processInput(String expression) {
         assert expression != null : "Input expression must not be null";
-        // assert isValidInput(expression) : "Invalid input expression";
 
         currentGuess = new StringBuilder(expression);
         boolean validInput = isValidInput(expression);
@@ -137,7 +135,6 @@ public class NumberleModel extends Observable implements INumberleModel {
                     i++;
                 }
                 default -> {
-                    // assert currentStackItem.matches("\\d+");
                     result = Double.parseDouble(currentStackItem);
                 }
             }
