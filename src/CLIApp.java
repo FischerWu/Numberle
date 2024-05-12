@@ -24,6 +24,9 @@ public class CLIApp {
         System.out.println("You have 6 attempts to guess the target equation");
         System.out.println("When calculating, you can use numbers (0-9) and arithmetic signs (+ - * / =)");
         System.out.println("You can enter 7 characters");
+        System.out.println("If the number or sign is in the equation, but in the wrong place, it will be highlighted in orange");
+        System.out.println("If it is in the exact place, then it will be highlighted in green");
+        System.out.println("If there is no number or sign in the equation at all, the color will be gray");
         System.out.println("Remaining attempts: " + model.getRemainingAttempts());
 
         while (!model.isGameOver()) {
@@ -53,25 +56,15 @@ public class CLIApp {
     }
 
     private static void printAvailChar(Map<String, Integer> charColorMap) {
-        System.out.println("Available characters:");
-        char[] allChar = {'1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '-', '*', '/', '='};
+        char[] allChar = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '-', '*', '/', '='};
 
         for (int colorIndex = 0; colorIndex < 4; colorIndex++) {
-            String colorName;
-            switch (colorIndex) {
-                case 1:
-                    colorName = "Green";
-                    break;
-                case 2:
-                    colorName = "Orange";
-                    break;
-                case 3:
-                    colorName = "Gray";
-                    break;
-                default:
-                    colorName = "White";
-                    break;
-            }
+            String colorName = switch (colorIndex) {
+                case 1 -> "Green";
+                case 2 -> "Orange";
+                case 3 -> "Gray";
+                default -> "White";
+            };
             System.out.println(colorName + " characters:");
             for (char key : allChar) {
                 String character = String.valueOf(key);
