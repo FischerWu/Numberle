@@ -88,6 +88,7 @@ public class NumberleModel extends Observable implements INumberleModel {
 
     private boolean checkValid() {
         String[] parts = currentGuess.toString().split("=");
+        // If the guess does not contain exactly one equals sign, return false
         if (parts.length != 2) {
             return false;
         }
@@ -95,6 +96,7 @@ public class NumberleModel extends Observable implements INumberleModel {
         String right = parts[1];
 
         try {
+            // Calculate the results of left and right expressions and compare
             double result = calculateResult(left);
             return result == calculateResult(right);
         } catch (Exception e) {
@@ -103,44 +105,35 @@ public class NumberleModel extends Observable implements INumberleModel {
     }
 
 
+    // Calculate the result of a mathematical expression
     private double calculateResult(String expression) {
-        // Split the expression using regular expressions to handle operator precedence
-        String[] parts = expression.split("(?=[+\\-*/])|(?<=[+\\-*/])");
-        double result = 0;
-        // Stack for storing operands and operators
-        Stack<String> stack = new Stack<>();
-        for (int i = 0; i < parts.length; i++) {
-            String currentPart = parts[i];
-            assert currentPart != null && !currentPart.isEmpty();
-            // Process differently depending on whether the current part is an operator or operand
-            switch (currentPart) {
-                case "*", "/" -> {
-                    double b = Double.parseDouble(stack.pop());
-                    assert (parts[i + 1] != null && parts[i + 1].matches("\\d+"));
-                    double a = Double.parseDouble(parts[i + 1]);
-                    i++;
-                    stack.push(currentPart.equals("*") ? String.valueOf(a * b) : String.valueOf(b / a));
+        Stack<Double> stack = new Stack<>();
+        char[] chars = expression.toCharArray();
+        double number = 0;
+        char operator = '+';
+        for (int i = 0; i < chars.length; i++) {
+            char c = chars[i];
+            if (Character.isDigit(c)) {
+                number = number * 10 + (c - '0');
+            }
+            if ((!Character.isDigit(c) && c != ' ') || i == chars.length - 1) {
+                switch (operator) {
+                    case '+' -> stack.push(number);
+                    case '-' -> stack.push(-number);
+                    case '*' -> stack.push(stack.pop() * number);
+                    case '/' -> stack.push(stack.pop() / number);
                 }
-                default -> stack.push(currentPart);
+                operator = c;
+                number = 0;
             }
         }
-
-        // Iterate over all items in the stack to compute the final result
-        for (int i = 0; i < stack.size(); i++) {
-            String currentStackItem = stack.get(i);
-            switch (currentStackItem) {
-                case "+", "-" -> {
-                    double nextStackItem = Double.parseDouble(stack.get(i + 1));
-                    result = currentStackItem.equals("+") ? result + nextStackItem : result - nextStackItem;
-                    i++;
-                }
-                default -> {
-                    result = Double.parseDouble(currentStackItem);
-                }
-            }
+        double result = 0;
+        while (!stack.isEmpty()) {
+            result += stack.pop();
         }
         return result;
     }
+
 
 
     @Override
@@ -181,23 +174,29 @@ public class NumberleModel extends Observable implements INumberleModel {
      * Load the target number from the file and randomly select one as the target number for the game.
      */
     private void loadTargetNumber() {
-        List<String> targetNumberList = new ArrayList<>();
+        Set<String> targetNumberSet = new HashSet<>();
+
         try (BufferedReader reader = new BufferedReader(new FileReader("equations.txt"))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                targetNumberList.add(line.trim());
+                String trimmedLine = line.trim();
+                targetNumberSet.add(trimmedLine);
             }
         } catch (IOException e) {
             System.err.println("Error reading the answers file: " + e.getMessage());
             return;
         }
+
+        // Randomly select a target number from the list
+        List<String> targetNumberList = new ArrayList<>(targetNumberSet);
         if (!targetNumberList.isEmpty()) {
             Random rand = new Random();
             targetNumber = targetNumberList.get(rand.nextInt(targetNumberList.size()));
         } else {
-            System.err.println("No answers found in the file.");
+            System.err.println("No unique answers found in the file.");
         }
     }
+
 
 
     /**
@@ -209,17 +208,30 @@ public class NumberleModel extends Observable implements INumberleModel {
      */
     private void setColorState() {
         colorState = new int[currentGuess.length()];
-        for (int i = 0; i < currentGuess.length(); i++) {
+        HashSet<Character> processedChars = new HashSet<>();
+        int i = 0;
+
+        while (i < currentGuess.length()) {
             char c = currentGuess.charAt(i);
-            if (c == targetNumber.charAt(i)) {
-                colorState[i] = 1;
-            } else if (targetNumber.contains(String.valueOf(c))) {
-                colorState[i] = 2;
-            } else {
-                colorState[i] = 3;
+
+            if (processedChars.contains(c)) {
+                i++;
+                continue;
             }
+
+            if (c == targetNumber.charAt(i)) {
+                colorState[i] = 1; // Green
+            } else if (targetNumber.contains(String.valueOf(c))) {
+                colorState[i] = 2; // Orange
+            } else {
+                colorState[i] = 3; // Gray
+            }
+            processedChars.add(c);
+            i++;
         }
     }
+
+
 
     /*
      * Set the current guess color state map, which maps each character to a color state.
@@ -228,18 +240,26 @@ public class NumberleModel extends Observable implements INumberleModel {
     private void setColorStateMap(String currentGuess, String targetNumber) {
         colorState = new int[currentGuess.length()];
         charColorMap = new HashMap<>();
-        for (int i = 0; i < currentGuess.length(); i++) {
+        HashSet<Character> targetChars = new HashSet<>();
+        for (char c : targetNumber.toCharArray()) {
+            targetChars.add(c);
+        }
+
+        int i = 0;
+        while (i < currentGuess.length()) {
             char c = currentGuess.charAt(i);
             if (c == targetNumber.charAt(i)) {
-                colorState[i] = 1;
-            } else if (targetNumber.contains(String.valueOf(c))) {
-                colorState[i] = 2;
+                colorState[i] = 1; // Green
+            } else if (targetChars.contains(c)) {
+                colorState[i] = 2; // Orange
             } else {
-                colorState[i] = 3;
+                colorState[i] = 3; // Gray
             }
             charColorMap.put(String.valueOf(c), colorState[i]);
+            i++;
         }
     }
+
 
     public int[] getColorState() {
         return colorState;
@@ -250,7 +270,9 @@ public class NumberleModel extends Observable implements INumberleModel {
     }
 
     private boolean isValidInput(String input) {
-        return input.length() == 7 && input.contains("=") && input.matches("[0-9+\\-*/=]+");
+        return input.length() == 7 &&
+                input.contains("=") &&
+                input.matches("[0-9+\\-*/=]+");
     }
 
     public boolean getFlag1() {

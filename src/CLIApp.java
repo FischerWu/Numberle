@@ -54,34 +54,35 @@ public class CLIApp {
 
     private static void printAvailChar(Map<String, Integer> charColorMap) {
         System.out.println("Available characters:");
-        String allChar = "123456789+-*/=";
-        System.out.print("White: ");
-        for (char key : allChar.toCharArray()) {
-            if (!charColorMap.containsKey(String.valueOf(key))) {
-                System.out.print(key + " ");
+        char[] allChar = {'1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '-', '*', '/', '='};
+
+        for (int colorIndex = 0; colorIndex < 4; colorIndex++) {
+            String colorName;
+            switch (colorIndex) {
+                case 1:
+                    colorName = "Green";
+                    break;
+                case 2:
+                    colorName = "Orange";
+                    break;
+                case 3:
+                    colorName = "Gray";
+                    break;
+                default:
+                    colorName = "White";
+                    break;
             }
+            System.out.println(colorName + " characters:");
+            for (char key : allChar) {
+                String character = String.valueOf(key);
+                int charColorIndex = charColorMap.getOrDefault(character, 0);
+                if (charColorIndex == colorIndex) {
+                    System.out.print(character + " ");
+                }
+            }
+            System.out.println();
         }
-        System.out.println();
-        System.out.print("Green: ");
-        charColorMap.forEach((character, colorIndex) -> {
-            if (colorIndex == 1) {
-                System.out.print(character + " ");
-            }
-        });
-        System.out.println();
-        System.out.print("Orange: ");
-        charColorMap.forEach((character, colorIndex) -> {
-            if (colorIndex == 2) {
-                System.out.print(character + " ");
-            }
-        });
-        System.out.println();
-        System.out.print("Gray: ");
-        charColorMap.forEach((character, colorIndex) -> {
-            if (colorIndex == 3) {
-                System.out.print(character + " ");
-            }
-        });
-        System.out.println();
     }
+
+
 }

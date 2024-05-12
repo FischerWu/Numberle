@@ -48,8 +48,9 @@ public class NumberleView implements Observer {
     // Initializes the menu that control the flag1 flag2 flag3
     private void initializeMenu() {
         JMenuBar menuBar = new JMenuBar();
-
+        // Create a menu bar called menu
         JMenu menu = new JMenu("Menu");
+        // Create menu items
         JMenuItem menuItem1 = new JMenuItem("Invalid Equation");
         menuItem1.setSelected(true);
         JMenuItem menuItem2 = new JMenuItem("Show Target Equation");
@@ -57,12 +58,13 @@ public class NumberleView implements Observer {
         JMenuItem menuItem3 = new JMenuItem("Default Equation");
         menuItem3.setSelected(true);
 
-
+        // Set initial background color for menu items based on controller flags
         menuItem1.setBackground(controller.getFlag1() ? new Color(0, 200, 150) : Color.WHITE);
         menuItem2.setBackground(controller.getFlag2() ? new Color(0, 200, 150) : Color.WHITE);
         menuItem3.setBackground(controller.getFlag3() ? new Color(0, 200, 150) : Color.WHITE);
 
 
+        // Add action listeners to menu items
         menuItem1.addActionListener(e -> {
             controller.changeFlag1();
             boolean currentState = controller.getFlag1();
@@ -83,6 +85,7 @@ public class NumberleView implements Observer {
             currentIndex = 0;
             menuItem3.setBackground(currentState ? new Color(0, 200, 150) : Color.WHITE);
         });
+        // Add menu to frame
         menu.add(menuItem1);
         menu.add(menuItem2);
         menu.add(menuItem3);
@@ -270,9 +273,11 @@ public class NumberleView implements Observer {
 
     @Override
     public void update(java.util.Observable o, Object arg) {
+        // Update the label
         attemptsLabel.setText("Attempts remaining: " + controller.getRemainingAttempts());
         targetLabel.setText("TargetNumber: " + controller.getTargetWord());
         String currentGuess = controller.getCurrentGuess().toString();
+        // If it's the first row and the guess is empty, reinitialize input fields and keyboard
         if (getCurrentRow() <= 0){
             if (currentGuess.equals("       ")) {
                 initInputFields();
@@ -280,9 +285,9 @@ public class NumberleView implements Observer {
             }
             return;
         }
-        updateInputFieldColors();
-        updateKeyBoardColors();
+        updateColors();
 
+        // If the game is over, show appropriate message
         if (controller.isGameOver()) {
             if (controller.isGameWon()) {
                 JOptionPane.showMessageDialog(frame, "Congratulations! You won!");
@@ -297,6 +302,7 @@ public class NumberleView implements Observer {
     private void initInputFields() {
         for (JTextField[] guessText : inputFields) {
             for (JTextField jTextField : guessText) {
+                // Clear text and reset background color
                 jTextField.setText("");
                 jTextField.setBackground(Color.WHITE);
             }
@@ -306,12 +312,14 @@ public class NumberleView implements Observer {
     // Initialize keyboard (number and operator button)
     private void initKeyboard() {
         for (JButton button : numberButtons) {
+            // Reset button appearance
             button.setBackground(Color.WHITE);
             button.setForeground(Color.BLACK);
             button.setOpaque(false);
         }
 
         for (JButton button : operatorButtons) {
+            // Reset button appearance
             button.setBackground(Color.WHITE);
             button.setForeground(Color.BLACK);
             button.setOpaque(false);
@@ -325,61 +333,60 @@ public class NumberleView implements Observer {
     }
 
     // Update the color of the input field
-    private void updateInputFieldColors() {
+    private void updateColors() {
         int[] colorState = model.getColorState();
+        Map<String, Integer> characterColorMap = model.getCharColorMap();
         int currentRow = getCurrentRow() - 1;
+
         if (currentRow >= 0 && currentRow < inputFields.length) {
             for (int i = 0; i < colorState.length; i++) {
-                switch (colorState[i]) {
-                    case 1 -> inputFields[currentRow][i].setBackground(new Color(0, 200, 150));
-                    case 2 -> inputFields[currentRow][i].setBackground(new Color(255, 150, 0));
-                    case 3 -> inputFields[currentRow][i].setBackground(new Color(160, 160, 180));
-                    default -> inputFields[currentRow][i].setBackground(Color.WHITE);
+                int colorIndex = colorState[i];
+                JTextField textField = inputFields[currentRow][i];
+                if (textField != null) {
+                    // Set background color based on feedback
+                    if (colorIndex == 1) {
+                        textField.setBackground(new Color(0, 200, 150));
+                    } else if (colorIndex == 2) {
+                        textField.setBackground(new Color(255, 150, 0));
+                    } else if (colorIndex == 3) {
+                        textField.setBackground(new Color(160, 160, 180));
+                    } else {
+                        textField.setBackground(Color.WHITE);
+                    }
                 }
             }
         }
-    }
 
-    // Update keyboard colors by characterColorMap
-    private void updateKeyBoardColors() {
-        Map<String,Integer> characterColorMap = model.getCharColorMap();
+        // Update button colors based on feedback
         for (JButton button : operatorButtons) {
-            String operator = button.getText();
-            int colorIndex = characterColorMap.getOrDefault(operator, 0);
-            setKeyBoardColor(button, colorIndex);
+            setButtonColor(button, characterColorMap.getOrDefault(button.getText(), 0));
         }
         for (JButton button : numberButtons) {
-            String operator = button.getText();
-            int colorIndex = characterColorMap.getOrDefault(operator, 0);
-            setKeyBoardColor(button, colorIndex);
+            setButtonColor(button, characterColorMap.getOrDefault(button.getText(), 0));
         }
     }
 
-    // Set keyboard button color
-    private void setKeyBoardColor(JButton button, int colorIndex) {
-        switch (colorIndex) {
-            case 1 -> {
-                button.setForeground(new Color(0, 200, 150));
-                button.setBackground(new Color(0, 200, 150));
-                button.setOpaque(true);
-            }
-            case 2 -> {
-                button.setForeground(new Color(255, 150, 0));
-                button.setBackground(new Color(255, 150, 0));
-                button.setOpaque(true);
-            }
-            case 3 -> {
-                button.setForeground(new Color(160, 160, 180));
-                button.setBackground(new Color(160, 160, 180));
-                button.setOpaque(true);
-            }
-            default -> {
-                button.setForeground(Color.BLACK);
-                button.setBackground(Color.WHITE);
-                button.setOpaque(false);
-            }
+    // Set button colors based on feedback
+    private void setButtonColor(JButton button, int colorIndex) {
+        if (colorIndex == 1) {
+            button.setForeground(new Color(0, 200, 150));
+            button.setBackground(new Color(0, 200, 150));
+            button.setOpaque(true);
+        } else if (colorIndex == 2) {
+            button.setForeground(new Color(255, 150, 0));
+            button.setBackground(new Color(255, 150, 0));
+            button.setOpaque(true);
+        } else if (colorIndex == 3) {
+            button.setForeground(new Color(160, 160, 180));
+            button.setBackground(new Color(160, 160, 180));
+            button.setOpaque(true);
+        } else {
+            button.setForeground(Color.BLACK);
+            button.setBackground(Color.WHITE);
+            button.setOpaque(false);
         }
     }
+
 
     // Enable or disable the restart button
     public void enableRestartButton(boolean bool) {
