@@ -32,7 +32,7 @@ public class NumberleView implements Observer {
     // Initializes the frame and menu of the game window
     private void initializeFrame() {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(600, 750);
+        frame.setSize(700, 750);
         frame.setLayout(new BorderLayout());
 
         initializeFirstPanel();
@@ -82,6 +82,7 @@ public class NumberleView implements Observer {
             controller.changeFlag3();
             boolean currentState = controller.getFlag3();
             this.controller.startNewGame();
+            controller.updateRestartButton();
             currentIndex = 0;
             menuItem3.setBackground(currentState ? new Color(0, 200, 150) : Color.WHITE);
         });
@@ -99,23 +100,35 @@ public class NumberleView implements Observer {
 
         JPanel inputPanel = new JPanel();
         inputPanel.setLayout(new GridLayout(6, 7, 10, 10));
-        inputPanel.setPreferredSize(new Dimension(420, 360));
+        Dimension panelSize = new Dimension(500,400);
+        inputPanel.setPreferredSize(panelSize);
 
-
-        for (int j = 0; j < inputFields.length; j++) {
-            for (int i = 0; i < inputFields[j].length; i++) {
-                inputFields[j][i] = new JTextField();
-                inputFields[j][i].setPreferredSize(new Dimension(60, 60));
-                inputFields[j][i].setFont(new Font("Arial", Font.BOLD, 24));
-                inputFields[j][i].setEditable(false);
-                inputFields[j][i].setBackground(Color.WHITE);
-                inputFields[j][i].setHorizontalAlignment(JTextField.CENTER);
-                inputPanel.add(inputFields[j][i]);
-            }
-        }
+        initializeInputPanel(inputPanel);
 
         firstPanel.add(inputPanel);
         frame.add(firstPanel, BorderLayout.NORTH);
+    }
+
+
+    private void initializeInputPanel(JPanel inputPanel) {
+        // Set the size, font, and background color of the text box
+        Dimension textFieldSize = new Dimension(80, 80);
+        Font textFieldFont = new Font("Arial", Font.PLAIN, 30);
+        Color textFieldBackground = Color.WHITE;
+
+        // Set the properties of each text box
+        for (int j = 0; j < inputFields.length; j++) {
+            for (int i = 0; i < inputFields[j].length; i++) {
+                JTextField textField = new JTextField();
+                textField.setPreferredSize(textFieldSize);
+                textField.setFont(textFieldFont);
+                textField.setEditable(false);
+                textField.setBackground(textFieldBackground);
+                textField.setHorizontalAlignment(JTextField.CENTER);
+                inputFields[j][i] = textField;
+                inputPanel.add(textField);
+            }
+        }
     }
 
     // Initializes the action panel and buttons that can see remaining attempts.
@@ -124,18 +137,35 @@ public class NumberleView implements Observer {
     private void initializeSecondPanel() {
         JPanel secondPanel = new JPanel();
         secondPanel.setLayout(new BoxLayout(secondPanel, BoxLayout.Y_AXIS));
-        JPanel timesPanel = new JPanel();
-        timesPanel.setLayout(new GridLayout(3, 1));
-        timesPanel.setPreferredSize(new Dimension(580, 75));
         JPanel attemptsPanel = new JPanel();
         attemptsPanel.add(attemptsLabel);
+        // remaining attempts
+        JPanel timesPanel = new JPanel();
+        timesPanel.setLayout(new GridLayout(3, 1));
+        Dimension panelSize = new Dimension(600,100);
+        timesPanel.setPreferredSize(panelSize);
+        timesPanel.add(attemptsPanel);
 
-        // target number
+        // restart button
+        setRestartButton(attemptsPanel);
+
+        // target number, controlled by flag2
+        setTargetNumber(secondPanel);
+
+        secondPanel.add(timesPanel);
+        frame.add(secondPanel, BorderLayout.CENTER);
+    }
+
+    private void setTargetNumber(JPanel secondPanel) {
+        Dimension panelSize = new Dimension(600,100);
         targetPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         targetPanel.add(targetLabel);
-        targetPanel.setPreferredSize(new Dimension(targetPanel.getPreferredSize().width, targetLabel.getPreferredSize().height));
+        targetPanel.setPreferredSize(panelSize);
         targetPanel.setVisible(controller.getFlag2());
-        // restart button
+        secondPanel.add(targetPanel);
+    }
+
+    private void setRestartButton(JPanel attemptsPanel) {
         restartButton = new JButton("Restart");
         restartButton.setEnabled(false);
         restartButton.setBackground(new Color(230, 230, 230));
@@ -143,14 +173,9 @@ public class NumberleView implements Observer {
         restartButton.addActionListener(e -> {
             controller.startNewGame();
             controller.updateRestartButton();
+            currentIndex = 0;
         });
-        // remaining attempts
         attemptsPanel.add(restartButton);
-        timesPanel.add(attemptsPanel);
-
-        secondPanel.add(timesPanel);
-        secondPanel.add(targetPanel);
-        frame.add(secondPanel, BorderLayout.CENTER);
     }
 
     // Initializes the number and operator input keyboard.
@@ -161,79 +186,28 @@ public class NumberleView implements Observer {
         JPanel thirdPanel = new JPanel();
         JPanel keyboardPanel = new JPanel();
         keyboardPanel.setLayout(new GridLayout(3, 1));
-        keyboardPanel.setPreferredSize(new Dimension(580, 180));
+        Dimension panelSize = new Dimension(600,200);
+        keyboardPanel.setPreferredSize(panelSize);
         JPanel numberPanel = new JPanel();
-        numberPanel.setLayout(new GridLayout(1, 10, 10, 10));
-        // Initialize numbers: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9
-        numberButtons = new JButton[10];
-        for (int i = 0; i < 10; i++) {
-            JButton button = new JButton(Integer.toString(i));
-            button.addActionListener(e -> {
-                if (controller.isGameOver()){
-                    return;
-                }
-                if (currentIndex < inputFields[getCurrentRow()].length) {
-                    inputFields[getCurrentRow()][currentIndex].setText(button.getText());
-                    currentIndex++;
-                } else {
-                    currentIndex = 7;
-                }
-            });
-            button.setPreferredSize(new Dimension(50, 50));
-            button.setBackground(Color.WHITE);
-            numberButtons[i] = button;
-            numberPanel.add(numberButtons[i]);
-        }
-        keyboardPanel.add(numberPanel);
+        setNumberKeyboard(numberPanel);
 
-        // Initialize Delete button
-        JPanel operatorPanel = new JPanel();
-        JPanel deletePanel = new JPanel();
-        JButton deleteButton = new JButton("Delete");
-        deleteButton.setPreferredSize(new Dimension(120, 50));
-        deleteButton.addActionListener(e -> {
-            currentIndex--;
-            if (controller.isGameOver()){
-                return;
-            }
-            if (currentIndex < 0) {
-                currentIndex = 0;
-                return;
-            }
-            if (currentIndex == 7) {
-                return;
-            }
-            inputFields[getCurrentRow()][currentIndex].setText("");
-        });
-        deleteButton.setBackground(new Color(230, 235, 230));
-        deletePanel.add(deleteButton);
-        operatorPanel.add(deletePanel);
+        JPanel operatorPanel = setDeletePanel();
 
         // Initialize operator buttons: +, -, *, /, =
-        operatorButtons = new JButton[5];
-        String[] operatorLabels = {"+", "-", "*", "/", "="};
-        for (int i = 0; i < operatorLabels.length; i++) {
-            operatorButtons[i] = new JButton(operatorLabels[i]);
-            JButton button = new JButton(operatorLabels[i]);
-            operatorButtons[i].addActionListener(e -> {
-                if (controller.isGameOver()){
-                    // remainingAttempts <= 0 || gameWon
-                    return;
-                }
-                if (currentIndex < inputFields[getCurrentRow()].length) {
-                    inputFields[getCurrentRow()][currentIndex].setText(button.getText());
-                    currentIndex++;
-                } else {
-                    // 0 <= currentIndex <= 7
-                    currentIndex = 7;
-                }
-            });
-            operatorButtons[i].setPreferredSize(new Dimension(50, 50));
-            operatorButtons[i].setBackground(Color.WHITE);
-            operatorPanel.add(operatorButtons[i]);
-        }
+        setOperatorKeyboard(operatorPanel);
 
         // Initialize submit button
+        setSubmitKeyboard(operatorPanel);
+        keyboardPanel.add(numberPanel);
+
+        keyboardPanel.add(operatorPanel);
+
+        thirdPanel.add(keyboardPanel);
+        frame.add(thirdPanel, BorderLayout.SOUTH);
+    }
+
+
+    private void setSubmitKeyboard(JPanel operatorPanel) {
         JPanel submitPanel = new JPanel();
         JButton submitButton = new JButton("Enter");
         submitButton.setPreferredSize(new Dimension(120, 50));
@@ -262,13 +236,83 @@ public class NumberleView implements Observer {
         submitButton.setBackground(new Color(230, 230, 230));
         submitPanel.add(submitButton);
         operatorPanel.add(submitPanel);
-
-        keyboardPanel.add(operatorPanel);
-
-        thirdPanel.add(keyboardPanel);
-        frame.add(thirdPanel, BorderLayout.SOUTH);
     }
 
+    private void setOperatorKeyboard(JPanel operatorPanel) {
+        operatorButtons = new JButton[5];
+        String[] operatorLabels = {"+", "-", "*", "/", "="};
+        for (int i = 0; i < operatorLabels.length; i++) {
+            operatorButtons[i] = new JButton(operatorLabels[i]);
+            JButton button = new JButton(operatorLabels[i]);
+            operatorButtons[i].addActionListener(e -> {
+                if (controller.isGameOver()){
+                    // remainingAttempts <= 0 || gameWon
+                    return;
+                }
+                if (currentIndex < inputFields[getCurrentRow()].length) {
+                    inputFields[getCurrentRow()][currentIndex].setText(button.getText());
+                    currentIndex++;
+                } else {
+                    // 0 <= currentIndex <= 7
+                    currentIndex = 7;
+                }
+            });
+            operatorButtons[i].setPreferredSize(new Dimension(50, 50));
+            operatorButtons[i].setBackground(Color.WHITE);
+            operatorPanel.add(operatorButtons[i]);
+        }
+    }
+
+
+    private void setNumberKeyboard(JPanel numberPanel) {
+        numberPanel.setLayout(new GridLayout(1, 10, 10, 10));
+        // Initialize numbers: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9
+        numberButtons = new JButton[10];
+        for (int i = 0; i < 10; i++) {
+            JButton button = new JButton(Integer.toString(i));
+            button.addActionListener(e -> {
+                if (controller.isGameOver()){
+                    return;
+                }
+                if (currentIndex < inputFields[getCurrentRow()].length) {
+                    inputFields[getCurrentRow()][currentIndex].setText(button.getText());
+                    currentIndex++;
+                } else {
+                    currentIndex = 7;
+                }
+            });
+            button.setPreferredSize(new Dimension(50, 50));
+            button.setBackground(Color.WHITE);
+            numberButtons[i] = button;
+            numberPanel.add(numberButtons[i]);
+        }
+    }
+
+    private JPanel setDeletePanel() {
+        // Initialize Delete button
+        JPanel operatorPanel = new JPanel();
+        JPanel deletePanel = new JPanel();
+        JButton deleteButton = new JButton("Delete");
+        deleteButton.setPreferredSize(new Dimension(120, 50));
+        deleteButton.addActionListener(e -> {
+            currentIndex--;
+            if (controller.isGameOver()){
+                return;
+            }
+            if (currentIndex < 0) {
+                currentIndex = 0;
+                return;
+            }
+            if (currentIndex == 7) {
+                return;
+            }
+            inputFields[getCurrentRow()][currentIndex].setText("");
+        });
+        deleteButton.setBackground(new Color(230, 235, 230));
+        deletePanel.add(deleteButton);
+        operatorPanel.add(deletePanel);
+        return operatorPanel;
+    }
 
 
     @Override
@@ -386,7 +430,6 @@ public class NumberleView implements Observer {
             button.setOpaque(false);
         }
     }
-
 
     // Enable or disable the restart button
     public void enableRestartButton(boolean bool) {
